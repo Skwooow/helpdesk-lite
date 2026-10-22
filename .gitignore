@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+!**/.env.example
 
 # Build output
 dist/
@@ -27,3 +28,10 @@ Desktop.ini
 # Local databases
 *.sqlite
 *.sqlite3
+
+# Загруженные пользователями файлы
+backend/uploads/
+
+# Сборка и зависимости
+backend/dist/
+backend/node_modules/
