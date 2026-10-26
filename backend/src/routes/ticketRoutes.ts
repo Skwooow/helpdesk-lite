@@ -55,6 +55,8 @@ ticketRouter.patch(
 // Комментарии доступны авторизованным пользователям, имеющим доступ к заявке.
 ticketRouter.get("/:id/comments", listTicketCommentsController);
 
+ticketRouter.post("/:id/comments", createTicketCommentController);
+
 
 ticketRouter.post(
   "/:id/attachments",
