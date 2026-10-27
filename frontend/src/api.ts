@@ -1,5 +1,10 @@
 
-import type { Ticket, TicketComment, User } from "./types";
+import type {
+  Ticket,
+  TicketComment,
+  User,
+  UserRole,
+} from "./types";
 
 const API_URL = "http://localhost:3000/api";
 const TOKEN_KEY = "helpdesk_access_token";
@@ -254,3 +259,49 @@ export async function updateTicketStatus(
     },
   );
 }
+
+export async function updateProfile(fullName: string): Promise<User> {
+  const result = await request<unknown>("/users/me", {
+    method: "PATCH",
+    body: JSON.stringify({ fullName }),
+  });
+
+  const data = unwrap(result);
+  return (data.user ?? data) as User;
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await request("/users/me/password", {
+    method: "PATCH",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+export async function getUsers(): Promise<User[]> {
+  const result = await request<unknown>("/users");
+  return extractArray<User>(result, ["users", "items"]);
+}
+
+export async function updateUserRole(
+  userId: string | number,
+  role: UserRole,
+): Promise<void> {
+  await request(`/users/${encodeURIComponent(String(userId))}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
+}
+
+export async function updateUserBlockedStatus(
+  userId: string | number,
+  isBlocked: boolean,
+): Promise<void> {
+  await request(`/users/${encodeURIComponent(String(userId))}/block`, {
+    method: "PATCH",
+    body: JSON.stringify({ isBlocked }),
+  });
+}
+

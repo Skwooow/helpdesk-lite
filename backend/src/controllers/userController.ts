@@ -158,10 +158,10 @@ export async function updateUserBlockController(
   } catch (error) {
     if (
   error instanceof Error &&
-  error.message === "LAST_ACTIVE_MANAGER"
+  error.message === "LAST_ACTIVE_AGENT"
 ) {
   response.status(409).json({
-    error: "Нельзя убрать или заблокировать последнего активного менеджера.",
+    error: "Нельзя убрать или заблокировать последнего активного админа.",
   });
   return;
 }

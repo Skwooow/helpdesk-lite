@@ -218,14 +218,14 @@ export async function updateUserRole(
       return false;
     }
 
-    // Нельзя лишить систему последнего активного менеджера.
-    if (target.role === "manager" && !target.is_blocked && role !== "manager") {
+    // нельзя лишить систему последнего активного админа.
+    if (target.role === "agent" && !target.is_blocked && role !== "agent") {
       const countResult = await client.query<{ count: string }>(
         `
           SELECT COUNT(*) AS count
           FROM users u
           JOIN roles r ON r.id = u.role_id
-          WHERE r.name = 'manager' AND u.is_blocked = FALSE
+          WHERE r.name = 'agent' AND u.is_blocked = FALSE
         `,
       );
 
@@ -291,7 +291,7 @@ export async function setUserBlocked(
 
     if (
       isBlocked &&
-      target.role === "manager" &&
+      target.role === "agent" &&
       !target.is_blocked
     ) {
       const countResult = await client.query<{ count: string }>(
@@ -299,12 +299,12 @@ export async function setUserBlocked(
           SELECT COUNT(*) AS count
           FROM users u
           JOIN roles r ON r.id = u.role_id
-          WHERE r.name = 'manager' AND u.is_blocked = FALSE
+          WHERE r.name = 'agent' AND u.is_blocked = FALSE
         `,
       );
 
       if (Number(countResult.rows[0].count) <= 1) {
-        throw new Error("LAST_ACTIVE_MANAGER");
+        throw new Error("LAST_ACTIVE_AGENT");
       }
     }
 

@@ -20,7 +20,7 @@ userRouter.patch("/me", updateMyProfileController);
 userRouter.patch("/me/password", changeMyPasswordController);
 
 // Управление пользователями доступно только менеджеру.
-userRouter.use(allowRoles("manager"));
+userRouter.use(allowRoles("agent"));
 
 userRouter.get("/", listUsersController);
 userRouter.patch("/:id/role", updateUserRoleController);

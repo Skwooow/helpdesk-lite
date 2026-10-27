@@ -13,6 +13,9 @@ import RegisterPage from "./pages/RegisterPage";
 import TicketsPage from "./pages/TicketsPage";
 import CreateTicketPage from "./pages/CreateTicketPage";
 import TicketDetailsPage from "./pages/TicketDetailsPage";
+import ProfilePage from "./pages/ProfilePage";
+import AdminPage from "./pages/AdminPage";
+import DashboardPage from "./pages/DashboardPage";
 import "./App.css";
 
 function AppContent() {
@@ -53,7 +56,7 @@ function AppContent() {
         path="/login"
         element={
           user ? (
-            <Navigate to="/tickets" replace />
+            <Navigate to="/dashboard" replace />
           ) : (
             <LoginPage onLogin={setUser} />
           )
@@ -62,7 +65,7 @@ function AppContent() {
 
       <Route
         path="/register"
-        element={user ? <Navigate to="/tickets" replace /> : <RegisterPage />}
+        element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
       />
 
       <Route
@@ -74,13 +77,34 @@ function AppContent() {
           )
         }
       >
-        <Route path="/" element={<Navigate to="/tickets" replace />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/tickets" element={<TicketsPage />} />
         <Route path="/tickets/new" element={<CreateTicketPage />} />
         <Route path="/tickets/:id" element={<TicketDetailsPage />} />
-      </Route>
+        <Route
+          path="/profile"
+          element={
+            <ProfilePage
+              user={user!}
+              onUserUpdated={setUser}
+              onLogout={handleLogout}
+            />
+          }
+        />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/admin"
+          element={
+          user?.role === "agent" ? (
+            <AdminPage />
+          ) : (
+            <Navigate to="/tickets" replace />
+          )
+        }
+      />
+      </Route>
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

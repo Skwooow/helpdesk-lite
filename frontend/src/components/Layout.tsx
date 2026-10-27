@@ -29,10 +29,17 @@ export default function Layout({ user, onLogout }: LayoutProps) {
           <span>Helpdesk Lite</span>
         </NavLink>
 
+
         <nav className="main-nav">
+                    <NavLink to="/dashboard">Главная</NavLink>
           <NavLink to="/tickets">Заявки</NavLink>
           <NavLink to="/tickets/new">Создать заявку</NavLink>
+          <NavLink to="/profile">Мой профиль</NavLink>
+          {user.role === "agent" && (
+            <NavLink to="/admin">Администрирование</NavLink>
+          )}
         </nav>
+
 
         <div className="user-menu">
           <div className="user-info">
