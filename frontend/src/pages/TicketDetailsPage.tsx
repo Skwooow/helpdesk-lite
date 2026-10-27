@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   addComment,
+  downloadTicketAttachment,
   getComments,
   getProfile,
   getTicket,
+  getTicketAttachments,
   updateTicketStatus,
 } from "../api";
+import type { TicketAttachment } from "../api";
 import type { Ticket, TicketComment, User } from "../types";
 
 const statusLabels: Record<string, string> = {
@@ -35,6 +38,8 @@ export default function TicketDetailsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | number | null>(null);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -43,16 +48,19 @@ export default function TicketDetailsPage() {
     setError("");
 
     try {
-      const [ticketData, commentsData, profile] = await Promise.all([
-        getTicket(id),
-        getComments(id),
-        getProfile(),
-      ]);
+      const [ticketData, commentsData, profile, attachmentsData] =
+        await Promise.all([
+          getTicket(id),
+          getComments(id),
+          getProfile(),
+          getTicketAttachments(id),
+        ]);
 
       setTicket(ticketData);
       setComments(commentsData);
       setUser(profile);
       setNewStatus(ticketData.status);
+      setAttachments(attachmentsData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Не удалось загрузить заявку.",
@@ -66,13 +74,36 @@ export default function TicketDetailsPage() {
     void loadData();
   }, [loadData]);
 
-  async function handleComment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!id || !commentText.trim()) return;
+  async function handleDownload(attachment: TicketAttachment) {
+  if (!id) return;
 
-    setSaving(true);
-    setError("");
-    setNotice("");
+  setDownloadingId(attachment.id);
+  setError("");
+  setNotice("");
+
+  try {
+    await downloadTicketAttachment(
+      id,
+      attachment.id,
+      attachment.original_name,
+    );
+    setNotice(`Скачивание файла «${attachment.original_name}» начато.`);
+  } catch (err) {
+    setError(
+      err instanceof Error ? err.message : "Не удалось скачать файл.",
+    );
+  } finally {
+    setDownloadingId(null);
+  }
+}
+
+  async function handleComment(event: FormEvent<HTMLFormElement>) {
+      event.preventDefault();
+      if (!id || !commentText.trim()) return;
+
+      setSaving(true);
+      setError("");
+      setNotice("");
 
     try {
       await addComment(id, commentText.trim());
@@ -98,7 +129,9 @@ export default function TicketDetailsPage() {
       setTicket(await getTicket(id));
       setNotice("Статус заявки обновлён.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось изменить статус.");
+      setError(
+        err instanceof Error ? err.message : "Не удалось изменить статус."
+      );
     } finally {
       setSaving(false);
     }
@@ -173,6 +206,42 @@ export default function TicketDetailsPage() {
                 {ticket.assignee_id ?? "Пока не назначен"}
               </strong>
             </div>
+          </div>
+            <div className="ticket-attachments">
+            <h3>Вложения</h3>
+
+            {attachments.length === 0 ? (
+              <p className="muted">К заявке пока не прикреплены файлы.</p>
+            ) : (
+              <ul className="attachment-list">
+                {attachments.map((attachment) => (
+                  <li key={attachment.id} className="attachment-item">
+                    <div>
+                      <strong>{attachment.original_name}</strong>
+                      <p className="muted">
+                        {(
+                          attachment.size_bytes / 1024
+                        ).toLocaleString("ru-RU", {
+                          maximumFractionDigits: 1,
+                        })}{" "}
+                        КБ
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="button button-secondary"
+                      disabled={downloadingId === attachment.id}
+                      onClick={() => void handleDownload(attachment)}
+                    >
+                      {downloadingId === attachment.id
+                        ? "Скачиваем..."
+                        : "Скачать"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </article>
 

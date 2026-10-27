@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getTickets } from "../api";
 import type { Ticket } from "../types";
@@ -24,6 +24,9 @@ export default function TicketsPage() {
   const [status, setStatus] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -42,14 +45,61 @@ export default function TicketsPage() {
     void loadTickets();
   }, [loadTickets]);
 
-  const filteredTickets = tickets.filter((ticket) => {
-    const matchesSearch =
-      `${ticket.title} ${ticket.description} ${ticket.id}`
-        .toLowerCase()
-        .includes(search.toLowerCase());
+  
+  // Фильтрация заявок по поиску и статусу
+  const filteredTickets = useMemo(() => {
+    return tickets.filter((ticket) => {
+      const matchesSearch =
+        `${ticket.title} ${ticket.description} ${ticket.id}`
+          .toLowerCase()
+          .includes(search.toLowerCase());
 
-    return matchesSearch && (status === "all" || ticket.status === status);
-  });
+      return matchesSearch && (status === "all" || ticket.status === status);
+    });
+  }, [tickets, search, status]);
+
+  // Сортировка найденных заявок
+  const sortedTickets = useMemo(() => {
+    return [...filteredTickets].sort((a, b) => {
+      if (sort === "oldest") {
+        return new Date(a.created_at ?? 0).getTime() -
+          new Date(b.created_at ?? 0).getTime();
+      }
+
+      if (sort === "title") {
+        return a.title.localeCompare(b.title, "ru");
+      }
+
+      if (sort === "priority") {
+        const priorityOrder: Record<string, number> = {
+          urgent: 4,
+          high: 3,
+          medium: 2,
+          low: 1,
+        };
+
+        return (priorityOrder[b.priority] ?? 0) -
+          (priorityOrder[a.priority] ?? 0);
+      }
+
+      // По умолчанию — сначала новые заявки
+      return new Date(b.created_at ?? 0).getTime() -
+        new Date(a.created_at ?? 0).getTime();
+    });
+  }, [filteredTickets, sort]);
+
+  // Пагинация
+  const pageCount = Math.max(1, Math.ceil(sortedTickets.length / pageSize));
+  const visibleTickets = sortedTickets.slice(
+    (page - 1) * pageSize,
+    page * pageSize,
+  );
+
+  // Возвращаемся на первую страницу при изменении поиска или фильтра
+  useEffect(() => {
+    setPage(1);
+  }, [search, status, sort, pageSize]);
+
 
   return (
     <section>
@@ -86,6 +136,27 @@ export default function TicketsPage() {
           <option value="closed">Закрытые</option>
         </select>
 
+        <select
+            aria-label="Сортировка заявок"
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
+            <option value="newest">Сначала новые</option>
+            <option value="oldest">Сначала старые</option>
+            <option value="title">По названию</option>
+            <option value="priority">По приоритету</option>
+          </select>
+
+          <select
+            aria-label="Количество заявок на странице"
+            value={pageSize}
+            onChange={(event) => setPageSize(Number(event.target.value))}
+          >
+            <option value={5}>5 на странице</option>
+            <option value={10}>10 на странице</option>
+            <option value={20}>20 на странице</option>
+          </select>
+
         <button className="button button-secondary" onClick={() => void loadTickets()}>
           Обновить
         </button>
@@ -113,7 +184,7 @@ export default function TicketsPage() {
         </div>
       ) : (
         <div className="ticket-list">
-          {filteredTickets.map((ticket) => (
+          {visibleTickets.map((ticket) => ( 
             <Link
               to={`/tickets/${ticket.id}`}
               className="ticket-card"
@@ -145,9 +216,38 @@ export default function TicketsPage() {
       )}
 
       {!loading && !error && (
-        <p className="results-count">
-          Показано заявок: {filteredTickets.length}
-        </p>
+        <div className="pagination">
+          <p className="results-count">
+            {sortedTickets.length === 0
+              ? "Заявок не найдено"
+              : `Показано ${(page - 1) * pageSize + 1}–${Math.min(
+                  page * pageSize,
+                  sortedTickets.length,
+                )} из ${sortedTickets.length}`}
+          </p>
+
+          <div className="pagination-buttons">
+            <button
+              className="button button-secondary"
+              disabled={page === 1}
+              onClick={() => setPage((current) => current - 1)}
+            >
+              Назад
+            </button>
+
+            <span>
+              Страница {page} из {pageCount}
+            </span>
+
+            <button
+              className="button button-secondary"
+              disabled={page >= pageCount}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Далее
+            </button>
+          </div>
+        </div>
       )}
     </section>
   );

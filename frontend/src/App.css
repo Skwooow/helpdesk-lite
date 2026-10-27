@@ -1020,3 +1020,89 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.pagination .results-count {
+  margin: 0;
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #657083;
+}
+
+.pagination-buttons button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.toolbar select {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+@media (max-width: 800px) {
+  .pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.ticket-attachments {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e9f0;
+}
+
+.ticket-attachments h3 {
+  margin: 0 0 12px;
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid #e5e9f0;
+  border-radius: 10px;
+}
+
+.attachment-item strong {
+  overflow-wrap: anywhere;
+}
+
+.attachment-item .muted {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .attachment-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

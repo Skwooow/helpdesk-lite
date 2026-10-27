@@ -5,6 +5,14 @@ import type {
   User,
   UserRole,
 } from "./types";
+export type TicketAttachment = {
+  id: number | string;
+  ticket_id: number | string;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at?: string;
+};
 
 const API_URL = "http://localhost:3000/api";
 const TOKEN_KEY = "helpdesk_access_token";
@@ -305,3 +313,83 @@ export async function updateUserBlockedStatus(
   });
 }
 
+// Получить список файлов, прикреплённых к заявке.
+export async function getTicketAttachments(
+  ticketId: string,
+): Promise<TicketAttachment[]> {
+  const result = await request<unknown>(
+    `/tickets/${encodeURIComponent(ticketId)}/attachments`,
+  );
+
+  return extractArray<TicketAttachment>(result, ["attachments", "items"]);
+}
+
+// Загрузить файл к существующей заявке.
+export async function uploadTicketAttachment(
+  ticketId: string,
+  file: File,
+): Promise<TicketAttachment> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const result = await request<unknown>(
+    `/tickets/${encodeURIComponent(ticketId)}/attachments`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+
+  const data = unwrap(result);
+  const attachment = data.attachment as TicketAttachment | undefined;
+
+  if (!attachment || attachment.id === undefined) {
+    throw new Error("Файл загружен, но сервер не вернул данные вложения.");
+  }
+
+  return attachment;
+}
+
+// Скачать файл из заявки.
+export async function downloadTicketAttachment(
+  ticketId: string,
+  attachmentId: string | number,
+  fileName: string,
+): Promise<void> {
+  const token = getToken();
+  const headers = new Headers();
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(
+    `${API_URL}/tickets/${encodeURIComponent(ticketId)}/attachments/${encodeURIComponent(String(attachmentId))}/download`,
+    { headers },
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    let message = "Не удалось скачать файл.";
+
+    try {
+      const data = JSON.parse(text) as { error?: string; message?: string };
+      message = data.error || data.message || message;
+    } catch {
+      // Если сервер вернул не JSON, используем стандартное сообщение.
+    }
+
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

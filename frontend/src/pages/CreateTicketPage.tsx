@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createTicket } from "../api";
+import { createTicket, uploadTicketAttachment } from "../api";
 
 export default function CreateTicketPage() {
   const navigate = useNavigate();
@@ -9,6 +9,7 @@ export default function CreateTicketPage() {
   const [priority, setPriority] = useState("medium");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -17,10 +18,17 @@ export default function CreateTicketPage() {
 
     try {
       const ticket = await createTicket({ title, description, priority });
+
+      if (file) {
+        await uploadTicketAttachment(String(ticket.id), file);
+      }
+
       navigate(`/tickets/${ticket.id}`);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Не удалось создать заявку.",
+        err instanceof Error
+          ? `Не удалось завершить создание заявки: ${err.message}`
+          : "Не удалось завершить создание заявки.",
       );
     } finally {
       setLoading(false);
@@ -85,6 +93,26 @@ export default function CreateTicketPage() {
             <option value="high">Высокий</option>
             <option value="urgent">Срочный</option>
           </select>
+        </div>
+
+        <div>
+          <label htmlFor="attachment">Прикрепить файл (необязательно)</label>
+          <input
+            id="attachment"
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.txt"
+            onChange={(event) =>
+              setFile(event.target.files?.[0] ?? null)
+            }
+          />
+          <p className="field-hint">
+            PDF, PNG, JPG или TXT. Максимальный размер — 5 МБ.
+          </p>
+          {file && (
+            <p className="field-hint">
+              Выбран файл: {file.name}
+            </p>
+          )}
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
