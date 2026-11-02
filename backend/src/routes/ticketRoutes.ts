@@ -23,10 +23,21 @@ import {
 } from "../controllers/ticketActionController";
 import { checkTicketAttachmentAccess } from "../middleware/ticketAttachmentAccess";
 
+import {
+  updateTicketController,
+  deleteTicketController,
+} from "../controllers/ticketCrudController";
+
 const ticketRouter = Router();
 
 // Все маршруты заявок доступны только после входа.
 ticketRouter.use(authenticateToken);
+
+// PATCH /api/tickets/:id — редактировать заявку.
+ticketRouter.patch("/:id", updateTicketController);
+
+// DELETE /api/tickets/:id — удалить заявку.
+ticketRouter.delete("/:id", deleteTicketController);
 
 // POST /api/tickets — создать заявку.
 ticketRouter.post("/", createTicketController);

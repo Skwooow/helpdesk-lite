@@ -2,9 +2,14 @@ import {
   createTicket as insertTicket,
   findTickets,
   findTicketById,
+  updateTicket,
+  deleteTicket,
+  deleteTicketFiles,
 } from "../repositories/ticketRepository";
+
 import type {
   CreateTicketData,
+  UpdateTicketData,
   TicketListParams,
 } from "../validators/ticketValidator";
 
@@ -25,7 +30,7 @@ export async function getTickets(
   return findTickets(userId, role, params);
 }
 
-// Получаем одну заявку с проверкой доступа.
+// Получаем одну заявку с учётом роли пользователя.
 export async function getTicket(
   ticketId: string,
   userId: string,
@@ -34,4 +39,29 @@ export async function getTicket(
   return findTicketById(ticketId, userId, role);
 }
 
-//Сервис пока небольшой: он отделяет бизнес-логику от SQL и контроллеров. Позже сюда добавим изменение статусов, назначение исполнителей и историю действий.
+// Редактируем заявку.
+export async function editTicket(
+  ticketId: string,
+  userId: string,
+  role: string,
+  data: UpdateTicketData,
+) {
+  return updateTicket(ticketId, userId, role, data);
+}
+
+// Удаляем заявку и её вложения.
+export async function removeTicket(
+  ticketId: string,
+  userId: string,
+  role: string,
+) {
+  const storedNames = await deleteTicket(ticketId, userId, role);
+
+  if (storedNames === null) {
+    return null;
+  }
+
+  await deleteTicketFiles(storedNames);
+
+  return { success: true };
+}

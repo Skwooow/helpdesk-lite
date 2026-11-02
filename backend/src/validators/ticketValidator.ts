@@ -37,6 +37,15 @@ export const createTicketSchema = z.object({
   categoryId: z.number().int().positive().nullable().optional(),
 });
 
+// Проверяем данные для редактирования заявки.
+// Все поля необязательные, но нужно передать хотя бы одно.
+export const updateTicketSchema = createTicketSchema
+  .partial()
+  .refine(
+    (data) => Object.keys(data).length > 0,
+    "Укажите хотя бы одно поле для изменения.",
+  );
+
 // Проверяем параметры списка заявок.
 export const ticketListSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -49,3 +58,4 @@ export const ticketListSchema = z.object({
 
 export type CreateTicketData = z.infer<typeof createTicketSchema>;
 export type TicketListParams = z.infer<typeof ticketListSchema>;
+export type UpdateTicketData = z.infer<typeof updateTicketSchema>;

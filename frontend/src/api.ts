@@ -232,6 +232,42 @@ export async function createTicket(input: {
   return ticket;
 }
 
+// Редактируем заявку.
+export async function editTicket(
+  ticketId: string,
+  input: {
+    title?: string;
+    description?: string;
+    priority?: string;
+    categoryId?: number | null;
+  },
+): Promise<Ticket> {
+  const result = await request<unknown>(
+    `/tickets/${encodeURIComponent(ticketId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+  const data = unwrap(result);
+  const ticket = (data.ticket ?? data) as Ticket;
+  if (!ticket || ticket.id === undefined) {
+    throw new Error("Сервер не вернул обновлённые данные заявки.");
+  }
+  return ticket;
+}
+// Удаляем заявку.
+export async function deleteTicket(
+  ticketId: string,
+): Promise<void> {
+  await request(
+    `/tickets/${encodeURIComponent(ticketId)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
 export async function getComments(
   ticketId: string,
 ): Promise<TicketComment[]> {

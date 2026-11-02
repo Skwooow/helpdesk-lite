@@ -2,8 +2,12 @@
 import { pool } from "../db/pool";
 import type {
   CreateTicketData,
+  UpdateTicketData,
   TicketListParams,
 } from "../validators/ticketValidator";
+import { uploadDirectory } from "../middleware/uploadMiddleware";
+import path from "node:path";
+import { unlink } from "node:fs/promises";
 
 type TicketRow = {
   id: string;
@@ -354,4 +358,259 @@ export async function findTicketHistory(ticketId: string) {
   );
 
   return result.rows;
+}
+
+
+// Редактируем заявку и сохраняем изменения в истории.
+export async function updateTicket(
+  ticketId: string,
+  userId: string,
+  role: string,
+  data: UpdateTicketData,
+) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const accessCondition = role === "user"
+      ? "AND author_id = $2"
+      : "";
+
+    const values = role === "user"
+      ? [ticketId, userId]
+      : [ticketId];
+
+    const current = await client.query<TicketRow>(
+      `
+        SELECT
+          t.id, t.title, t.description, t.status, t.priority,
+          t.author_id, t.assignee_id, t.category_id,
+          c.name AS category_name,
+          t.created_at, t.updated_at
+        FROM tickets t
+        LEFT JOIN categories c ON c.id = t.category_id
+        WHERE t.id = $1 ${accessCondition}
+        FOR UPDATE OF t
+      `,
+      values,
+    );
+
+    if (current.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const oldTicket = current.rows[0];
+
+    // Сопоставляем поля запроса с колонками базы данных.
+    const fields: {
+      key: keyof UpdateTicketData;
+      column: string;
+      oldValue: unknown;
+      newValue: unknown;
+    }[] = [
+      {
+        key: "title",
+        column: "title",
+        oldValue: oldTicket.title,
+        newValue: data.title,
+      },
+      {
+        key: "description",
+        column: "description",
+        oldValue: oldTicket.description,
+        newValue: data.description,
+      },
+      {
+        key: "priority",
+        column: "priority",
+        oldValue: oldTicket.priority,
+        newValue: data.priority,
+      },
+      {
+        key: "categoryId",
+        column: "category_id",
+        oldValue: oldTicket.category_id,
+        newValue: data.categoryId,
+      },
+    ];
+
+    const changes = fields.filter(
+      (field) =>
+        field.newValue !== undefined &&
+        String(field.oldValue ?? "") !== String(field.newValue ?? ""),
+    );
+
+    // Если значения не изменились, возвращаем текущую заявку.
+    if (changes.length === 0) {
+      await client.query("COMMIT");
+      return oldTicket;
+    }
+
+    const updateValues: unknown[] = [];
+    const assignments = changes.map((field) => {
+      updateValues.push(field.newValue);
+      return `${field.column} = $${updateValues.length}`;
+    });
+
+    updateValues.push(ticketId);
+
+    await client.query(
+      `
+        UPDATE tickets
+        SET ${assignments.join(", ")},
+            updated_at = NOW()
+        WHERE id = $${updateValues.length}
+      `,
+      updateValues,
+    );
+
+    // Сохраняем все изменения одним событием в истории.
+    const oldValues = Object.fromEntries(
+      changes.map((field) => [field.key, field.oldValue]),
+    );
+
+    const newValues = Object.fromEntries(
+      changes.map((field) => [field.key, field.newValue]),
+    );
+
+    await client.query(
+      `
+        INSERT INTO ticket_history
+          (ticket_id, actor_id, action, old_value, new_value)
+        VALUES ($1, $2, 'ticket_updated', $3, $4)
+      `,
+      [
+        ticketId,
+        userId,
+        JSON.stringify(oldValues),
+        JSON.stringify(newValues),
+      ],
+    );
+
+    const updated = await client.query<TicketRow>(
+      `
+        SELECT
+          t.id, t.title, t.description, t.status, t.priority,
+          t.author_id, t.assignee_id, t.category_id,
+          c.name AS category_name,
+          t.created_at, t.updated_at
+        FROM tickets t
+        LEFT JOIN categories c ON c.id = t.category_id
+        WHERE t.id = $1
+      `,
+      [ticketId],
+    );
+
+    await client.query("COMMIT");
+    return updated.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Удаляем заявку и получаем имена связанных файлов.
+export async function deleteTicket(
+  ticketId: string,
+  userId: string,
+  role: string,
+): Promise<string[] | null> {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const accessCondition = role === "user"
+      ? "AND author_id = $2"
+      : "";
+
+    const values = role === "user"
+
+
+? [ticketId, userId]
+      : [ticketId];
+
+    const current = await client.query(
+      `
+        SELECT id
+        FROM tickets
+        WHERE id = $1 ${accessCondition}
+        FOR UPDATE
+      `,
+      values,
+    );
+
+    if (current.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const attachments = await client.query<{ stored_name: string }>(
+      `
+        SELECT stored_name
+        FROM attachments
+        WHERE ticket_id = $1
+      `,
+      [ticketId],
+    );
+
+    // Удаление заявки автоматически удалит связанные записи
+    // благодаря ON DELETE CASCADE в базе данных.
+    await client.query(
+      "DELETE FROM tickets WHERE id = $1",
+      [ticketId],
+    );
+
+    await client.query("COMMIT");
+
+    return attachments.rows.map((attachment) => attachment.stored_name);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Удаляем физические файлы после успешного удаления заявки из БД.
+export async function deleteTicketFiles(
+  storedNames: string[],
+): Promise<void> {
+  for (const storedName of storedNames) {
+    // Не позволяем имени файла выйти за пределы папки вложений.
+    if (
+      path.basename(storedName) !== storedName ||
+      !storedName
+    ) {
+      console.error("Некорректное имя файла вложения:", storedName);
+      continue;
+    }
+
+    const filePath = path.resolve(uploadDirectory, storedName);
+
+    if (path.dirname(filePath) !== path.resolve(uploadDirectory)) {
+      console.error("Некорректный путь к файлу вложения:", storedName);
+      continue;
+    }
+
+    try {
+      await unlink(filePath);
+    } catch (error) {
+      // Отсутствующий файл не мешает удалению заявки.
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        continue;
+      }
+
+      // Ошибка удаления файла не отменяет уже выполненное удаление заявки.
+      console.error("Не удалось удалить файл вложения:", storedName, error);
+    }
+  }
 }
