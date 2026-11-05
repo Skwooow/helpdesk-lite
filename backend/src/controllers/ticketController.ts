@@ -9,7 +9,6 @@ import {
   getTicket,
 } from "../services/ticketService";
 
-// Создаём заявку.
 export async function createTicketController(
   request: Request,
   response: Response,
@@ -46,7 +45,6 @@ export async function createTicketController(
   }
 }
 
-// Получаем список заявок.
 export async function listTicketsController(
   request: Request,
   response: Response,
@@ -77,7 +75,6 @@ export async function listTicketsController(
   }
 }
 
-// Получаем одну заявку.
 export async function getTicketController(
   request: Request,
   response: Response,

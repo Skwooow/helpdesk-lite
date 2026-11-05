@@ -1,7 +1,6 @@
 
 import "dotenv/config";
 
-// Проверяем наличие секретов для подписания токенов.
 const accessSecret = process.env.JWT_ACCESS_SECRET;
 const refreshSecret = process.env.JWT_REFRESH_SECRET;
 

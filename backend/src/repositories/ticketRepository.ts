@@ -23,7 +23,6 @@ type TicketRow = {
   updated_at: Date;
 };
 
-// Создаём заявку от имени текущего пользователя.
 export async function createTicket(
   authorId: string,
   data: CreateTicketData,
@@ -58,7 +57,6 @@ export async function createTicket(
   return result.rows[0];
 }
 
-// Получаем список заявок с фильтрами и пагинацией.
 export async function findTickets(
   userId: string,
   role: string,
@@ -67,7 +65,6 @@ export async function findTickets(
   const conditions: string[] = [];
   const values: unknown[] = [];
 
-  // Обычный пользователь видит только собственные заявки.
   if (role === "user") {
     values.push(userId);
     conditions.push(`t.author_id = $${values.length}`);
@@ -137,7 +134,6 @@ export async function findTickets(
   };
 }
 
-// Получаем одну заявку с учётом роли пользователя.
 export async function findTicketById(
   ticketId: string,
   userId: string,
@@ -168,7 +164,6 @@ export async function findTicketById(
   return result.rows[0] ?? null;
 }
 
-// Изменяем статус заявки и сохраняем изменение в истории.
 export async function updateTicketStatus(
   ticketId: string,
   status: string,
@@ -220,7 +215,6 @@ export async function updateTicketStatus(
   }
 }
 
-// Назначаем или снимаем исполнителя заявки.
 export async function assignTicket(
   ticketId: string,
   assigneeId: string | null,
@@ -296,7 +290,6 @@ export async function assignTicket(
   }
 }
 
-// Добавляем комментарий к заявке.
 export async function addTicketComment(
   ticketId: string,
   authorId: string,
@@ -314,7 +307,6 @@ export async function addTicketComment(
   return result.rows[0];
 }
 
-// Получаем комментарии заявки.
 export async function findTicketComments(ticketId: string) {
   const result = await pool.query(
     `
@@ -336,7 +328,6 @@ export async function findTicketComments(ticketId: string) {
   return result.rows;
 }
 
-// Получаем историю изменений заявки.
 export async function findTicketHistory(ticketId: string) {
   const result = await pool.query(
     `
@@ -360,8 +351,6 @@ export async function findTicketHistory(ticketId: string) {
   return result.rows;
 }
 
-
-// Редактируем заявку и сохраняем изменения в истории.
 export async function updateTicket(
   ticketId: string,
   userId: string,
@@ -403,7 +392,6 @@ export async function updateTicket(
 
     const oldTicket = current.rows[0];
 
-    // Сопоставляем поля запроса с колонками базы данных.
     const fields: {
       key: keyof UpdateTicketData;
       column: string;
@@ -442,7 +430,6 @@ export async function updateTicket(
         String(field.oldValue ?? "") !== String(field.newValue ?? ""),
     );
 
-    // Если значения не изменились, возвращаем текущую заявку.
     if (changes.length === 0) {
       await client.query("COMMIT");
       return oldTicket;
@@ -466,7 +453,6 @@ export async function updateTicket(
       updateValues,
     );
 
-    // Сохраняем все изменения одним событием в истории.
     const oldValues = Object.fromEntries(
       changes.map((field) => [field.key, field.oldValue]),
     );
@@ -513,7 +499,6 @@ export async function updateTicket(
   }
 }
 
-// Удаляем заявку и получаем имена связанных файлов.
 export async function deleteTicket(
   ticketId: string,
   userId: string,
@@ -558,8 +543,6 @@ export async function deleteTicket(
       [ticketId],
     );
 
-    // Удаление заявки автоматически удалит связанные записи
-    // благодаря ON DELETE CASCADE в базе данных.
     await client.query(
       "DELETE FROM tickets WHERE id = $1",
       [ticketId],
@@ -576,12 +559,10 @@ export async function deleteTicket(
   }
 }
 
-// Удаляем физические файлы после успешного удаления заявки из БД.
 export async function deleteTicketFiles(
   storedNames: string[],
 ): Promise<void> {
   for (const storedName of storedNames) {
-    // Не позволяем имени файла выйти за пределы папки вложений.
     if (
       path.basename(storedName) !== storedName ||
       !storedName
@@ -600,7 +581,6 @@ export async function deleteTicketFiles(
     try {
       await unlink(filePath);
     } catch (error) {
-      // Отсутствующий файл не мешает удалению заявки.
       if (
         error instanceof Error &&
         "code" in error &&
@@ -609,7 +589,6 @@ export async function deleteTicketFiles(
         continue;
       }
 
-      // Ошибка удаления файла не отменяет уже выполненное удаление заявки.
       console.error("Не удалось удалить файл вложения:", storedName, error);
     }
   }

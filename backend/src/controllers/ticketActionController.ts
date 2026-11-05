@@ -1,4 +1,3 @@
-
 import type { Request, Response } from "express";
 import {
   updateStatusSchema,
@@ -13,7 +12,6 @@ import {
   getTicketHistory,
 } from "../services/ticketActionService";
 
-// Проверяем номер заявки.
 function getTicketId(request: Request): string | null {
   const rawId = request.params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
@@ -21,7 +19,6 @@ function getTicketId(request: Request): string | null {
   return id && /^[1-9]\d*$/.test(id) ? id : null;
 }
 
-// Изменяем статус заявки.
 export async function updateTicketStatusController(
   request: Request,
   response: Response,
@@ -52,7 +49,6 @@ export async function updateTicketStatusController(
   }
 }
 
-// Назначаем исполнителя.
 export async function assignTicketController(
   request: Request,
   response: Response,
@@ -92,7 +88,6 @@ export async function assignTicketController(
   }
 }
 
-// Добавляем комментарий.
 export async function createTicketCommentController(
   request: Request,
   response: Response,
@@ -124,7 +119,6 @@ export async function createTicketCommentController(
   }
 }
 
-// Получаем комментарии заявки.
 export async function listTicketCommentsController(
   request: Request,
   response: Response,
@@ -154,7 +148,6 @@ export async function listTicketCommentsController(
   }
 }
 
-// Получаем историю изменений заявки.
 export async function listTicketHistoryController(
   request: Request,
   response: Response,

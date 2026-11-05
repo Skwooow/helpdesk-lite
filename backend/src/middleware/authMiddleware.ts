@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-// Проверяем токен и актуальное состояние пользователя в базе.
+//проврка токена и состояние пользователя
 export async function authenticateToken(
   request: Request,
   response: Response,
@@ -45,7 +45,6 @@ export async function authenticateToken(
       return;
     }
 
-    // Берём актуальную роль и статус блокировки из PostgreSQL.
     const user = await findUserById(decoded.userId);
 
     if (!user) {
@@ -71,7 +70,6 @@ export async function authenticateToken(
   }
 }
 
-// Разрешаем действие только указанным ролям.
 export function allowRoles(...allowedRoles: string[]) {
   return (
     request: Request,

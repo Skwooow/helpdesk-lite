@@ -8,7 +8,7 @@ import {
   findTicketHistory,
 } from "../repositories/ticketRepository";
 
-// Проверяем доступ к заявке перед выполнением действия.
+// Проверяем доступ к заявке перед выполнением действия
 async function ensureTicketAccess(
   ticketId: string,
   userId: string,
@@ -41,7 +41,7 @@ export async function changeTicketAssignee(
   return assignTicket(ticketId, assigneeId, userId);
 }
 
-// Добавляем комментарий после проверки доступа.
+// Добавляем комментарий после проверки доступа
 export async function createComment(
   ticketId: string,
   userId: string,
@@ -52,7 +52,7 @@ export async function createComment(
   return addTicketComment(ticketId, userId, body);
 }
 
-// Получаем комментарии только доступной пользователю заявки.
+// Получаем комментарии только доступной пользователю заявки
 export async function getTicketComments(
   ticketId: string,
   userId: string,
@@ -62,7 +62,7 @@ export async function getTicketComments(
   return findTicketComments(ticketId);
 }
 
-// Получаем историю изменений доступной пользователю заявки.
+// Получаем историю изменений доступной пользователю заявки
 export async function getTicketHistory(
   ticketId: string,
   userId: string,

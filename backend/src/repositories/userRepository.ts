@@ -176,8 +176,6 @@ export async function updateUserPassword(
   return (result.rowCount ?? 0) > 0;
 }
 
-// Изменяем роль пользователя.
-
  // Изменяем роль с защитой последнего активного менеджера.
 export async function updateUserRole(
   userId: string,

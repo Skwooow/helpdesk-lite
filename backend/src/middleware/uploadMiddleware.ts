@@ -45,7 +45,6 @@ const upload = multer({
 
 import type { Request, Response, NextFunction } from "express";
 
-// Преобразуем ошибки загрузки в понятные ответы API.
 export function uploadSingleAttachment(
   req: Request,
   res: Response,
@@ -85,7 +84,6 @@ export function uploadSingleAttachment(
     next(error);
   });
 }
-
 
 export default upload;
 export { uploadDirectory };

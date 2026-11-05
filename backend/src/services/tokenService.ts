@@ -3,13 +3,13 @@ import jwt from "jsonwebtoken";
 import { createHash, randomUUID } from "node:crypto";
 import { jwtConfig } from "../config/jwt";
 
-// Данные, которые будут храниться внутри токена.
+//данные которые будут храниться внутри токена.
 type TokenPayload = {
   userId: string;
   role: string;
 };
 
-// Создаём токен доступа и токен обновления.
+//токен доступа и токен обновления.
 export function createTokenPair(userId: string, role: string) {
   const payload: TokenPayload = { userId, role };
 
@@ -29,12 +29,12 @@ export function createTokenPair(userId: string, role: string) {
   };
 }
 
-// Создаём хеш токена обновления для безопасного хранения в базе.
+//хеш токена обновления для безопасного хранения в базе.
 export function hashRefreshToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-// Проверяем подпись и содержимое токена обновления.
+//проверка подпись и содержимое токена обновления.
 export function verifyRefreshToken(token: string): TokenPayload {
   const decoded = jwt.verify(token, jwtConfig.refreshSecret);
 

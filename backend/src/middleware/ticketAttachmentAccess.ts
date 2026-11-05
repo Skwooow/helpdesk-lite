@@ -2,7 +2,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { findTicketById } from "../repositories/ticketRepository";
 
-// Проверяем доступ до того, как Multer запишет файл на диск.
 export async function checkTicketAttachmentAccess(
   req: Request,
   res: Response,

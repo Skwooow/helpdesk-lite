@@ -15,7 +15,7 @@ import {
   updateUserRoleSchema,
 } from "../validators/userValidator";
 
-// Получаем профиль текущего пользователя.
+//профиль текущего пользователя
 export async function getMyProfileController(
   request: Request,
   response: Response,
@@ -32,7 +32,7 @@ export async function getMyProfileController(
   }
 }
 
-// Обновляем имя текущего пользователя.
+//обновление имени
 export async function updateMyProfileController(
   request: Request,
   response: Response,
@@ -55,7 +55,7 @@ export async function updateMyProfileController(
   }
 }
 
-// Меняем пароль и завершаем активные сессии пользователя.
+//смена пароляи актив сессия
 export async function changeMyPasswordController(
   request: Request,
   response: Response,
@@ -86,7 +86,7 @@ export async function changeMyPasswordController(
   }
 }
 
-// Получаем список пользователей для менеджера.
+//списаок пользователей для агента
 export async function listUsersController(
   _request: Request,
   response: Response,
@@ -99,7 +99,7 @@ export async function listUsersController(
   }
 }
 
-// Изменяем роль пользователя.
+//изменение роли
 export async function updateUserRoleController(
   request: Request,
   response: Response,
@@ -136,7 +136,7 @@ export async function updateUserRoleController(
   }
 }
 
-// Блокируем или разблокируем пользователя.
+//блок и анблок пользователя
 export async function updateUserBlockController(
   request: Request,
   response: Response,

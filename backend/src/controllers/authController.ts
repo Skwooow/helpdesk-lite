@@ -11,12 +11,11 @@ import type { Request, Response } from "express";
 import { registerUser } from "../services/authService";
 import { registrationSchema } from "../validators/authValidator";
 
-// Обрабатываем запрос на регистрацию пользователя.
+//обрабатка запроса на регистрацию пользователя.
 export async function registerController(
   request: Request,
   response: Response,
 ): Promise<void> {
-  // Проверяем данные, полученные от клиента.
   const validationResult = registrationSchema.safeParse(request.body);
 
   if (!validationResult.success) {
@@ -43,7 +42,7 @@ export async function registerController(
       },
     });
   } catch (error) {
-    // Код 23505 означает нарушение ограничения уникальности в PostgreSQL.
+    // 23505 нарушение ограничения уникальности в PostgreSQL.
     if (
       typeof error === "object" &&
       error !== null &&
@@ -73,7 +72,6 @@ export async function registerController(
     });
   }
 }
-
 
  // Обрабатываем запрос на вход в аккаунт.
 export async function loginController(

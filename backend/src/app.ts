@@ -10,28 +10,23 @@ import userRoutes from "./routes/userRoutes";
 
 const app = express();
 
-
-// Добавляем защитные HTTP-заголовки.
 app.use(helmet());
 
-// Разрешаем запросы с локального адреса фронтенда.
 app.use(
   cors({
     origin: "http://localhost:5173",
   }),
 );
 
-// Разбираем JSON в теле запроса. Ограничиваем размер до 1 МБ.
 app.use(express.json({ limit: "1mb" }));
 
-// Подключаем маршруты регистрации и авторизации.
 app.use("/api/auth", authRoutes);
 
 app.use("/api/tickets", ticketRoutes);
 
 app.use("/api/users", userRoutes);
 
-// Ограничиваем количество запросов с одного IP-адреса.
+// Ограничиваем количество запросов с одного IP-адреса
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -41,14 +36,14 @@ app.use(
   }),
 );
 
-// Проверяем, что API запущен.
+// Проверяем, что API запущен
 app.get("/", (_request, response) => {
   response.json({
     message: "API Helpdesk Lite работает!",
   });
 });
 
-// Проверяем доступность базы данных.
+// Проверяем доступность базы данных
 app.get("/health", async (_request, response) => {
   try {
     await pool.query("SELECT 1");

@@ -5,7 +5,6 @@ import {
 } from "../services/ticketService";
 import { updateTicketSchema } from "../validators/ticketValidator";
 
-// Проверяем ID заявки.
 function getTicketId(request: Request): string | null {
   const ticketId = request.params.id;
 
@@ -19,7 +18,6 @@ function getTicketId(request: Request): string | null {
   return ticketId;
 }
 
-// Редактируем заявку.
 export async function updateTicketController(
   request: Request,
   response: Response,
@@ -71,7 +69,6 @@ export async function updateTicketController(
   }
 }
 
-// Удаляем заявку.
 export async function deleteTicketController(
   request: Request,
   response: Response,

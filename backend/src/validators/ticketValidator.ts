@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 
-// Допустимые статусы заявки.
+//допустимые статусы заявки
 export const ticketStatuses = [
   "new",
   "in_progress",
@@ -10,7 +10,7 @@ export const ticketStatuses = [
   "closed",
 ] as const;
 
-// Допустимые приоритеты заявки.
+//допустимые приоритеты заявки
 export const ticketPriorities = [
   "low",
   "medium",
@@ -18,7 +18,6 @@ export const ticketPriorities = [
   "urgent",
 ] as const;
 
-// Проверяем данные для создания заявки.
 export const createTicketSchema = z.object({
   title: z
     .string()
@@ -37,8 +36,8 @@ export const createTicketSchema = z.object({
   categoryId: z.number().int().positive().nullable().optional(),
 });
 
-// Проверяем данные для редактирования заявки.
-// Все поля необязательные, но нужно передать хотя бы одно.
+//проверяем данные для редактирования заявки
+//все поля необязательные, но нужно передать хотя бы одно
 export const updateTicketSchema = createTicketSchema
   .partial()
   .refine(
@@ -46,7 +45,7 @@ export const updateTicketSchema = createTicketSchema
     "Укажите хотя бы одно поле для изменения.",
   );
 
-// Проверяем параметры списка заявок.
+//проверяем параметры списка заявок
 export const ticketListSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
